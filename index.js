@@ -101,9 +101,9 @@ const addRoles = () => {
     })
     .then((answer) => {
       const query = connection.query(
-        "INSERT INTO department SET ?",
+        "INSERT INTO roles SET ?",
         {
-          department_name: answer.addDepartment,
+          role_name: answer.addRoles,
         },
         (err, res) => {
           if (err) throw err;
