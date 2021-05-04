@@ -119,23 +119,26 @@ const addRoles = () => {
 const addEmployees = () => {
   inquirer
     .prompt({
-      name: "artist",
+      name: "addEmployees",
       type: "input",
-      message: "What artist would you like to search for?",
+      message: "Would you like to add any new employees?",
     })
     .then((answer) => {
-      const query = "SELECT position, song, year FROM top5000 WHERE ?";
-      connection.query(query, { artist: answer.artist }, (err, res) => {
-        res.forEach(({ position, song, year }) => {
-          console.log(
-            `Position: ${position} || Song: ${song} || Year: ${year}`
-          );
-        });
-        runSearch();
-      });
+      const query = connection.query(
+        "INSERT INTO employees SET ?",
+        {
+          role_name: answer.addEmployees,
+        },
+        (err, res) => {
+          if (err) throw err;
+          console.log(`${res.affectedRows} product inserted!\n`);
+        }
+      );
+
+      // logs the actual query being run
+      console.log(query.sql);
     });
 };
-
 
 const veiwDepartment = () => {
   inquirer
