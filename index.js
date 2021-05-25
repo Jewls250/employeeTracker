@@ -1,6 +1,7 @@
 const mysql = require("mysql");
 const fs = require('fs')
-const inquirer = require('inquirer')
+const inquirer = require('inquirer');
+const BottomBar = require("inquirer/lib/ui/bottom-bar");
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -89,6 +90,8 @@ const addDepartment = () => {
 
   // logs the actual query being run
   console.log(query.sql);
+  runSearch()
+
   });
 };
 
@@ -101,9 +104,10 @@ const addRoles = () => {
     })
     .then((answer) => {
       const query = connection.query(
-        "INSERT INTO roles SET ?",
+        "INSERT INTO employee_role SET ?",
         {
-          role_name: answer.addRoles,
+          title: answer.addRoles,
+          
         },
         (err, res) => {
           if (err) throw err;
@@ -113,6 +117,7 @@ const addRoles = () => {
 
       // logs the actual query being run
       console.log(query.sql);
+      runSearch()
     });
 };
 
@@ -125,9 +130,9 @@ const addEmployees = () => {
     })
     .then((answer) => {
       const query = connection.query(
-        "INSERT INTO employees SET ?",
+        "INSERT INTO employee SET ?",
         {
-          role_name: answer.addEmployees,
+          first_name: answer.addEmployees,
         },
         (err, res) => {
           if (err) throw err;
@@ -137,85 +142,91 @@ const addEmployees = () => {
 
       // logs the actual query being run
       console.log(query.sql);
+      runSearch()
     });
 };
 
 const veiwDepartment = () => {
-  inquirer
-    .prompt({
-      name: "artist",
-      type: "input",
-      message: "What artist would you like to search for?",
-    })
-    .then((answer) => {
-      const query = "SELECT position, song, year FROM top5000 WHERE ?";
-      connection.query(query, { artist: answer.artist }, (err, res) => {
-        res.forEach(({ position, song, year }) => {
+      const query = "SELECT * FROM department";
+      connection.query(query, (err, res) => {
+        res.forEach((department) => {
           console.log(
-            `Position: ${position} || Song: ${song} || Year: ${year}`
+            `Departments: ${department.department_name} `
           );
         });
         runSearch();
-      });
     });
 };
 
 const viewRoles = () => {
-  inquirer
-    .prompt({
-      name: "artist",
-      type: "input",
-      message: "What artist would you like to search for?",
-    })
-    .then((answer) => {
-      const query = "SELECT position, song, year FROM top5000 WHERE ?";
-      connection.query(query, { artist: answer.artist }, (err, res) => {
-        res.forEach(({ position, song, year }) => {
+      const query = "SELECT * FROM employee_role";
+      connection.query(query, (err, res) => {
+        res.forEach(({title, salary, id}) => {
           console.log(
-            `Position: ${position} || Song: ${song} || Year: ${year}`
+            `Employee Info: Job Titile: ${title}, Salary: ${salary}, ID: ${id}`
           );
         });
         runSearch();
-      });
     });
 };
 
 const viewEmployee = () => {
-  inquirer
-    .prompt({
-      name: "artist",
-      type: "input",
-      message: "What artist would you like to search for?",
-    })
-    .then((answer) => {
-      const query = "SELECT position, song, year FROM top5000 WHERE ?";
-      connection.query(query, { artist: answer.artist }, (err, res) => {
-        res.forEach(({ position, song, year }) => {
+      const query = "SELECT * FROM employee";
+      connection.query(query, (err, res) => {
+        res.forEach(({ first_name }) => {
           console.log(
-            `Position: ${position} || Song: ${song} || Year: ${year}`
+            `Name: ${first_name}`
           );
         });
         runSearch();
-      });
     });
 };
 
 const updateEmployeeRole = () => {
-  inquirer
-    .prompt({
-      name: "artist",
-      type: "input",
-      message: "What artist would you like to search for?",
-    })
-    .then((answer) => {
-      const query = "SELECT position, song, year FROM top5000 WHERE ?";
-      connection.query(query, { artist: answer.artist }, (err, res) => {
-        res.forEach(({ position, song, year }) => {
-          console.log(
-            `Position: ${position} || Song: ${song} || Year: ${year}`
-          );
+  const query = "SELECT * FROM employee";
+  let sort , employee_id;
+  connection.query(query, (err, res) => {
+        sort = res.map(({ first_name, last_name, id }) => {
+          return {name: `${first_name} ${last_name}`, value: `${id}`}
         });
-        runSearch();
+        console.log(sort)
+
+        inquirer
+          .prompt({
+            name: "updating_employee",
+            type: "list",
+            message: "Who would you like to update?",
+            choices: sort,
+          })
+      .then((res) => {
+        const query = "SELECT * FROM employee_role";
+        let title_list;
+        employee_id = res.updating_employee
+        connection.query(query, (err, res) => {
+          title_list = res.map(({ title, id }) => {
+            return {name: `${title}`, value: `${id}`}
+        });
+          console.log(title_list)
+
+         
+
+        inquirer
+          .prompt({
+            name: "changing_role",
+            type: "list",
+            message: "What role are they changing?",
+            choices: title_list,
+          }).then((answer) => {
+             const query = connection.query(
+               "UPDATE employee SET role_id = ? WHERE id = ?",
+               [  answer.changing_role , employee_id ],
+               (err, res) => {
+                 if (err) throw err;
+                 console.log(`${res.affectedRows} product inserted!\n`);
+               }
+             );
+          })
       });
-    });
-};
+    })
+  });
+}
